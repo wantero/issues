@@ -1,4 +1,6 @@
 defmodule Issues.GithubIssues do
+  # use a module attribute to fetch the value at compile time
+  @github_url Application.get_env(:issues, :github_url)
   @user_agent [{"User-agent", "Elixir dave@pragprog.com"}]
 
   def fetch(user, project) do
@@ -8,14 +10,21 @@ defmodule Issues.GithubIssues do
   end
 
   def issues_url(user, project) do
-    "https://api.github.com/repos/#{user}/#{project}/issues"
+    "#{@github_url}/repos/#{user}/#{project}/issues"
   end
 
-  def handle_response({:ok, %{status_code: 200, body: body}}) do
-    {:ok, body}
+  def handle_response({_, %{status_code: status_code, body: body}}) do
+    {
+      status_code |> check_for_error(),
+      body |> Poison.Parser.parse!()
+    }
   end
 
-  def handle_response({_, %{status_code: _, body: body}}) do
-    {:error, body}
+  defp check_for_error(200) do
+    :ok
+  end
+
+  defp check_for_error(_) do
+    :error
   end
 end
