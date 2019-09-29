@@ -7,6 +7,8 @@ defmodule Issues.CLI do
 
   @default_count 4
 
+  import Issues.TableFormatter, only: [print_table_for_columns: 2]
+
   def run(argv) do
     argv
     |> parse_args
@@ -55,11 +57,10 @@ defmodule Issues.CLI do
     |> decode_response()
     |> sort_into_descending_order()
     |> last(count)
+    |> print_table_for_columns(["number", "created_at", "title"])
   end
 
-  def decode_response({:ok, body}) do
-    :body
-  end
+  def decode_response({:ok, body}), do: body
 
   def decode_response({:error, error}) do
     IO.puts("Error fetching from Github: #{error["message"]}")
